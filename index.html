@@ -353,6 +353,61 @@
                     0 2px 0 #080c14,
                     0 6px 14px rgba(0, 0, 0, 0.7);
             }
+
+            #chat-container {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    height: 420px;
+    background: rgba(255, 255, 255, 0.02); /* 2% white tint */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15); /* 1px border */
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6); /* 1px slight shadow */
+    border-radius: 12px;
+    display: none; /* Hidden until game starts */
+    flex-direction: column;
+    z-index: 50;
+    font-family: "Arial", sans-serif;
+}
+.chat-title {
+    text-align: center;
+    color: #e8e8f0;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15); /* Divider line */
+    user-select: none;
+}
+#chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    color: #ffffff;
+    font-size: 14px;
+    line-height: 1.5; /* Nicely spaced */
+    word-wrap: break-word; /* Wraps long text */
+}
+#chat-input {
+    margin: 10px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    outline: none;
+    font-family: "Arial", sans-serif;
+    font-size: 14px;
+}
+#chat-input::placeholder {
+    color: #999;
+}
+/* Custom scrollbar for chat */
+#chat-messages::-webkit-scrollbar { width: 6px; }
+#chat-messages::-webkit-scrollbar-track { background: transparent; }
+#chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
         </style>
     </head>
     <body>
@@ -365,6 +420,14 @@
             <div id="leaderboard-content"></div>
         </div>
         <canvas id="gameCanvas"></canvas>
+
+        <!-- CHAT UI -->
+<div id="chat-container">
+    <div class="chat-title">BezelSnake: Chat</div>
+    <div id="chat-messages"></div>
+    <input id="chat-input" type="text" maxlength="200" placeholder="Press Enter to chat..." autocomplete="off" spellcheck="false" />
+</div>
+        
         <div id="fade-overlay"></div>
         <div id="start-screen">
             <h1 class="title">\|/ BezelSnake</h1>
@@ -813,6 +876,10 @@
             let camera = { x: 0, y: 0 };
             let isBoosting = false;
             let gameStarted = false;
+            let isTyping = false;
+const chatInput = document.getElementById("chat-input");
+const chatMessages = document.getElementById("chat-messages");
+const chatContainer = document.getElementById("chat-container");
             let mouseDirection = 0;
             let mouseDistance = 0;
             let animationFrameId = null;
@@ -948,6 +1015,17 @@
 
                 for (let i = 0; i < playerSnake.length; i++) {
                     playerSnake.segments.push({ x: playerSnake.x, y: playerSnake.y, size: playerSnake.size });
+
+                    // Show chat UI
+chatContainer.style.display = "flex";
+chatMessages.innerHTML = ""; // Clear previous game's chat
+
+// Add the requested long test message (3 sentences, wraps twice, doesn't flood)
+addChatMessage(
+    "Bezel", 
+    "Welcome to the game everyone! Please remember to be respectful and have fun out there. If you encounter any bugs, try refreshing the page or letting me know directly on the server.", 
+    false
+);
                 }
 
                 camera.x = playerSnake.x - canvas.width / 2;
@@ -1099,6 +1177,36 @@
                 }, 16);
             }
 
+                        function startFadeToMenu() {
+                // ... [rest of your existing code inside this function] ...
+                }, 16);
+            }
+
+            // PASTE THE FUNCTION HERE:
+            function addChatMessage(name, text, isPlayer) {
+                const msgDiv = document.createElement("div");
+                msgDiv.style.marginBottom = "6px";
+                
+                const nameSpan = document.createElement("span");
+                nameSpan.style.color = "#4ade80"; // Green username
+                nameSpan.style.fontWeight = "bold";
+                nameSpan.textContent = name + ": ";
+                
+                const textSpan = document.createElement("span");
+                textSpan.style.color = isPlayer ? "#f87171" : "#ffffff"; // Red for self, white for others
+                textSpan.textContent = text;
+                
+                msgDiv.appendChild(nameSpan);
+                msgDiv.appendChild(textSpan);
+                chatMessages.appendChild(msgDiv);
+                
+                // Auto scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // ========== INPUT HANDLING ==========
+            
+
             // ========== INPUT HANDLING ==========
             function setupInputHandlers() {
                 canvas.addEventListener("mousemove", (e) => {
@@ -1187,6 +1295,48 @@
                     initGame();
                 });
             }
+
+            window.addEventListener("keydown", (e) => {
+    // 1. Chat Focus Logic
+    if (e.key === "Enter") {
+        if (!isTyping && gameStarted && playerSnake.isAlive) {
+            e.preventDefault();
+            isTyping = true;
+            chatInput.focus();
+            chatInput.style.border = "1px solid rgba(255,255,255,0.4)";
+        } else if (isTyping) {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (text.length > 0) {
+                // --- BACKEND PLACEHOLDER ---
+                // When you're ready, replace this with:
+                // mpSocket.send(JSON.stringify({ type: "chat", text: text }));
+                console.log("Message to send to server:", text); 
+                
+                // Show it locally immediately
+                addChatMessage(playerSnake.name, text, true); 
+            }
+            chatInput.value = "";
+            chatInput.blur();
+            chatInput.style.border = "1px solid rgba(255,255,255,0.1)";
+            isTyping = false;
+        }
+        return; // Stop game keys from triggering
+    }
+
+    if (e.key === "Escape" && isTyping) {
+        chatInput.value = "";
+        chatInput.blur();
+        chatInput.style.border = "1px solid rgba(255,255,255,0.1)";
+        isTyping = false;
+        return;
+    }
+
+    // Prevent game keys (Space, H) from firing while typing
+    if (isTyping) return;
+
+    // ... (Your existing Space/H key logic goes here) ...
+});
 
             // ========== GAME LOOP ==========
             function gameLoop() {
