@@ -1017,14 +1017,15 @@ const chatContainer = document.getElementById("chat-container");
                     playerSnake.segments.push({ x: playerSnake.x, y: playerSnake.y, size: playerSnake.size });
                 }
 
-                                // Show chat UI
+                                                // Show chat UI
                 chatContainer.style.display = "flex";
                 
-                // Only add the test message if the chat is completely empty (first game)
-                if (chatMessages.children.length === 0) {
+                // Try to load saved history. If it's empty, add the test message.
+                const hasHistory = loadChatHistory();
+                if (!hasHistory && chatMessages.children.length === 0) {
                     addChatMessage(
                         "Bezel", 
-                        "Welcome to the game everyone! Please remember to be respectful and have fun out there. If you encounter any bugs, try refreshing the page or letting me know directly on the server.", 
+                        "Finally Chat...", 
                         false
                     );
                 }
@@ -1182,7 +1183,7 @@ const chatContainer = document.getElementById("chat-container");
                        
 
             // PASTE THE FUNCTION HERE:
-            function addChatMessage(name, text, isPlayer) {
+                        function addChatMessage(name, text, isPlayer, isHistory = false) {
                 const msgDiv = document.createElement("div");
                 msgDiv.style.marginBottom = "6px";
                 
@@ -1201,6 +1202,43 @@ const chatContainer = document.getElementById("chat-container");
                 
                 // Auto scroll to bottom
                 chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Keep only the last 10 messages
+                while (chatMessages.children.length > 10) {
+                    chatMessages.removeChild(chatMessages.firstChild);
+                }
+
+                // Save to localStorage if this is a new message
+                if (!isHistory) {
+                    saveChatHistory();
+                }
+            }
+
+            function saveChatHistory() {
+                const history = [];
+                for (let i = 0; i < chatMessages.children.length; i++) {
+                    const msgDiv = chatMessages.children[i];
+                    const nameText = msgDiv.children[0].textContent.slice(0, -2); // remove ": "
+                    const textContent = msgDiv.children[1].textContent;
+                    const isPlayer = msgDiv.children[1].style.color === "rgb(248, 113, 113)"; // #f87171
+                    history.push({ name: nameText, text: textContent, isPlayer });
+                }
+                localStorage.setItem("bezelChatHistory", JSON.stringify(history));
+            }
+
+            function loadChatHistory() {
+                const saved = localStorage.getItem("bezelChatHistory");
+                if (saved) {
+                    try {
+                        const history = JSON.parse(saved);
+                        chatMessages.innerHTML = ""; // clear before loading
+                        history.forEach(msg => addChatMessage(msg.name, msg.text, msg.isPlayer, true));
+                        return true;
+                    } catch (e) {
+                        console.error("Failed to load chat history", e);
+                    }
+                }
+                return false;
             }
 
             // ========== INPUT HANDLING ==========
