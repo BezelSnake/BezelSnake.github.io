@@ -1017,16 +1017,17 @@ const chatContainer = document.getElementById("chat-container");
                     playerSnake.segments.push({ x: playerSnake.x, y: playerSnake.y, size: playerSnake.size });
                 }
 
-                // Show chat UI
+                                // Show chat UI
                 chatContainer.style.display = "flex";
-                chatMessages.innerHTML = ""; // Clear previous game's chat
-
-                // Add the requested long test message
-                addChatMessage(
-                    "Bezel", 
-                    "Welcome to the game everyone! Please remember to be respectful and have fun out there. If you encounter any bugs, try refreshing the page or letting me know directly on the server.", 
-                    false
-                );
+                
+                // Only add the test message if the chat is completely empty (first game)
+                if (chatMessages.children.length === 0) {
+                    addChatMessage(
+                        "Bezel", 
+                        "Welcome to the game everyone! Please remember to be respectful and have fun out there. If you encounter any bugs, try refreshing the page or letting me know directly on the server.", 
+                        false
+                    );
+                }
 
                 camera.x = playerSnake.x - canvas.width / 2;
                 camera.y = playerSnake.y - canvas.height / 2;
@@ -2307,7 +2308,9 @@ const chatContainer = document.getElementById("chat-container");
                     } else if (msg.type === "init" || msg.type === "state") {
                         applyServerState(msg);
                     } else if (msg.type === "chat") {
-                        addChatMessage(msg.name, msg.text, msg.id === mpId);
+                        if (msg.id !== mpId) {
+                            addChatMessage(msg.name, msg.text, false);
+                        }
                     } else if (msg.type === "death") {
                         if (msg.id === mpId) {
                             if (playerSnake.isAlive) {
