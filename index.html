@@ -1162,6 +1162,7 @@ const chatContainer = document.getElementById("chat-container");
                         document.getElementById("start-screen").style.display = "flex";
                         document.getElementById("change-skin-btn").style.display = "flex";
                         document.getElementById("change-cosmetic-btn").style.display = "flex";
+                        chatContainer.style.display = "none";
                         setTimeout(() => {
                             let outOpacity = 1;
                             const fadeOut = setInterval(() => {
@@ -1279,7 +1280,7 @@ const chatContainer = document.getElementById("chat-container");
                             e.preventDefault();
                             const text = chatInput.value.trim();
                             if (text.length > 0) {
-                                console.log("Message to send to server:", text); 
+                                mpSocket.send(JSON.stringify({ type: "chat", text: text })); 
                                 addChatMessage(playerSnake.name, text, true); 
                             }
                             chatInput.value = "";
@@ -2305,6 +2306,8 @@ const chatContainer = document.getElementById("chat-container");
                         mpId = msg.id;
                     } else if (msg.type === "init" || msg.type === "state") {
                         applyServerState(msg);
+                    } else if (msg.type === "chat") {
+                        addChatMessage(msg.name, msg.text, msg.id === mpId);
                     } else if (msg.type === "death") {
                         if (msg.id === mpId) {
                             if (playerSnake.isAlive) {
