@@ -32,6 +32,21 @@
                 font-size: 16px;
                 opacity: 0.8;
             }
+
+            #server-status {
+                position: absolute;
+                bottom: 15px;
+                right: 15px;
+                color: #ffaa00;
+                font-size: 12px;
+                font-family: "Arial", sans-serif;
+                pointer-events: none;
+                user-select: none;
+                z-index: 50;
+                text-shadow: 1px 1px 2px black;
+                transition: color 0.3s;
+            }
+            
             #leaderboard {
                 position: absolute;
                 top: 10px;
@@ -414,6 +429,7 @@
         <div id="ui">
             <div id="score">0</div>
             <div id="mass">0 mass</div>
+            <div id="server-status">Connecting to arena...</div>
         </div>
         <div id="leaderboard">
             <div class="leaderboard-title">Leaderboard</div>
@@ -1033,11 +1049,13 @@ const chatContainer = document.getElementById("chat-container");
                 camera.x = playerSnake.x - canvas.width / 2;
                 camera.y = playerSnake.y - canvas.height / 2;
 
-                                if (mpSocket) {
+                                                if (mpSocket && mpSocket.readyState === 1) {
+                    // Tell the server we died so it instantly drops our old body
+                    try { mpSocket.send(JSON.stringify({ type: "death", x: playerSnake.x, y: playerSnake.y })); } catch (e) {}
                     try { mpSocket.close(); } catch (e) {}
                     mpSocket = null;
                 }
-                mpId = null;
+                mpId = null;   
                 remoteSnakes.clear();
                 playerSnapshots = [];
                 initMultiplayer();
@@ -2301,6 +2319,8 @@ const chatContainer = document.getElementById("chat-container");
 
                 let sock;
                 try {
+                    document.getElementById("server-status").textContent = "Connecting to arena...";
+                    document.getElementById("server-status").style.color = "#ffaa00";
                     sock = new WebSocket("wss://2slither.duckdns.org/ws");
                     mpSocket = sock;
                 } catch (err) {
@@ -2308,19 +2328,22 @@ const chatContainer = document.getElementById("chat-container");
                     return;
                 }
 
-                sock.addEventListener("open", () => {
+                                sock.addEventListener("open", () => {
                     if (mpSocket !== sock) return;
                     sock.send(JSON.stringify({
                         type: "join",
                         name: playerSnake.name,
                         hue: savedHue,
                     }));
+                    document.getElementById("server-status").textContent = "Syncing...";
                     console.log("[MP] connected");
                 });
 
-                sock.addEventListener("close", () => {
+                    sock.addEventListener("close", () => {
                     if (mpSocket !== sock) return;
                     console.log("[MP] closed");
+                    document.getElementById("server-status").textContent = "Disconnected";
+                    document.getElementById("server-status").style.color = "#ff4444";
                     // If we never got the spawn, try again
                     if (gameStarted && !gameReady) {
                         console.log("[MP] retrying in 1s");
@@ -2414,6 +2437,8 @@ const chatContainer = document.getElementById("chat-container");
                                 playerSnake.segments.push({ x: s.x, y: s.y, size: s.sz });
                             }
                             gameReady = true;
+                            document.getElementById("server-status").textContent = "Online";
+                            document.getElementById("server-status").style.color = "#44ff44";
                         }
                         continue;
                     }
