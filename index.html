@@ -2903,7 +2903,7 @@ const chatContainer = document.getElementById("chat-container");
                 try {
                     document.getElementById("server-status").textContent = "Connecting to arena...";
                     document.getElementById("server-status").style.color = "#ffaa00";
-                    sock = new WebSocket("wss://2slither.duckdns.org/ws");
+                    sock = new WebSocket("wss://api.bezelsnake.io/slither");
                     mpSocket = sock;
                 } catch (err) {
                     console.warn("[MP] failed to init:", err);
