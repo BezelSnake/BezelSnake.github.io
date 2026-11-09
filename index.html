@@ -3,6 +3,8 @@
     <head>
         <link rel="icon" type="image/png" href="Slither-icon.png" />
         <title>BezelSnake</title>
+            <!-- Markdown Parser -->
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <style>
             body {
                 margin: 0;
@@ -144,6 +146,28 @@
                 border-radius: 34px;
                 display: inline-block;
                 bottom: 350px;
+                padding: 0;
+                outline: 1px solid #000;
+            }
+            #start-button2 {
+                position: relative;
+                width: 110px;
+                background-color: #2e5a3e;
+                color: #ffffff;
+                border: none;
+                appearance: none;
+                -webkit-appearance: none;
+                font-weight: bold;
+                text-align: center;
+                font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 20px;
+                cursor: pointer;
+                height: 47px;
+                line-height: 47px;
+                box-shadow: rgba(0, 0, 0, 0.75) 0px 3px 20px;
+                border-radius: 34px;
+                display: inline-block;
+                bottom: 300px;
                 padding: 0;
                 outline: 1px solid #000;
             }
@@ -420,9 +444,270 @@
     color: #999;
 }
 /* Custom scrollbar for chat */
+            /* ========== AI CHAT WORKSPACE STYLES ========== */
+            #ai-chat-messages {
+                flex: 1;
+                width: 100%;
+                max-width: 800px;
+                overflow-y: auto;
+                padding: 20px;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                margin-bottom: 20px;
+            }
+
+            .ai-msg-row {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .ai-msg-user {
+                color: #a0a0c0; /* Slightly muted for user text */
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+
+            .ai-msg-bot {
+                color: #ffffff;
+                font-size: 16px;
+                line-height: 1.6;
+                white-space: pre-wrap;
+            }
+
+            /* Inline Code Highlight */
+            .ai-msg-bot code, .ai-msg-bot p code {
+                background-color: #1a3524; /* Dark Green */
+                color: #ffffff;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: 'Consolas', monospace;
+                font-size: 15px;
+            }
+
+            /* Code Card Block */
+            .ai-code-card {
+                background-color: #1a3524;
+                border: 1px solid #4c447c;
+                border-radius: 8px;
+                margin: 16px 0;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+
+            .ai-code-header {
+                background-color: #111a14; /* Slightly darker for the top bar */
+                padding: 8px 16px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #4c447c;
+                font-family: 'Consolas', monospace;
+                font-size: 13px;
+                color: #6e6eae;
+            }
+
+            .ai-code-actions {
+                display: flex;
+                gap: 12px;
+            }
+
+            .ai-code-btn {
+                background: transparent;
+                border: none;
+                color: #6e6eae;
+                cursor: pointer;
+                font-size: 12px;
+                font-family: Arial, sans-serif;
+                transition: color 0.2s;
+            }
+
+            .ai-code-btn:hover {
+                color: #ffffff;
+            }
+
+            .ai-code-card pre {
+                margin: 0;
+                padding: 16px;
+                overflow-x: auto;
+            }
+
+            .ai-code-card pre code {
+                background: transparent;
+                padding: 0;
+                color: #e8e8f0;
+                font-family: 'Consolas', monospace;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            /* Attachment Button */
+            .ai-attach-btn {
+                background: transparent;
+                color: #6e6eae;
+                border: none;
+                border-radius: 50%;
+                width: 38px;
+                height: 38px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+                transition: color 0.2s;
+                margin-right: auto; /* Pushes it to the left */
+            }
+
+            .ai-attach-btn:hover {
+                color: #ffffff;
+            }
+
+            .ai-attach-btn svg {
+                width: 20px;
+                height: 20px;
+            }
 #chat-messages::-webkit-scrollbar { width: 6px; }
 #chat-messages::-webkit-scrollbar-track { background: transparent; }
 #chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+            /* ========== AI SCREEN STYLES ========== */
+            #ai-screen {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: none; /* Hidden by default */
+                flex-direction: row;
+                z-index: 250; /* Above everything else */
+                font-family: "Arial", sans-serif;
+            }
+
+            /* Sidebar */
+            .ai-sidebar {
+                width: 260px;
+                background-color: #1a3524;
+                border-right: 1px solid #4c447c;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .ai-sidebar-header {
+                padding: 20px;
+                border-bottom: 1px solid #4c447c;
+            }
+
+            #ai-back-btn {
+                background: transparent;
+                border: 1px solid #4c447c;
+                color: #6e6eae;
+                padding: 8px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                width: 100%;
+                transition: all 0.2s ease;
+            }
+
+            #ai-back-btn:hover {
+                background: #4c447c;
+                color: white;
+            }
+
+            .ai-sidebar-empty {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #6e6eae;
+                font-size: 14px;
+            }
+
+            /* Main Chat Area */
+            .ai-main-chat {
+                flex: 1;
+                background: radial-gradient(ellipse at center, #2e5a3e 0%, #1a3524 55%, #0a1410 100%);
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                align-items: center;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+
+            .ai-input-wrapper {
+                width: 100%;
+                max-width: 700px;
+                margin-bottom: 30px;
+            }
+
+            .ai-input-box {
+                background-color: #21442e;
+                border: 1px solid #4c447c;
+                border-radius: 24px;
+                padding: 18px 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            }
+
+            #ai-chatInput {
+                background: transparent;
+                border: none;
+                color: #ffffff;
+                font-family: "Arial", sans-serif;
+                font-size: 16px;
+                line-height: 1.5;
+                resize: none;
+                outline: none;
+                width: 100%;
+                min-height: 48px;
+                max-height: 200px;
+                padding: 0;
+                margin: 0;
+            }
+
+            #ai-chatInput::placeholder {
+                color: #6e6eae;
+            }
+
+            .ai-action-row {
+                display: flex;
+                justify-content: flex-end; 
+                align-items: center;
+            }
+
+            .ai-send-btn {
+                background-color: #4c447c;
+                color: #ffffff;
+                border: none;
+                border-radius: 50%;
+                width: 38px;
+                height: 38px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+                transition: background-color 0.2s ease, transform 0.1s ease;
+            }
+
+            .ai-send-btn:hover {
+                background-color: #6a5a8a;
+            }
+
+            .ai-send-btn:active {
+                transform: scale(0.95);
+            }
+
+            .ai-send-btn svg {
+                width: 20px;
+                height: 20px;
+                fill: currentColor;
+            }
+
         </style>
     </head>
     <body>
@@ -456,6 +741,7 @@
                 spellcheck="false"
             />
             <button id="start-button">PLAY</button>
+            <button id="start-button2">AI</button>
         </div>
         <div id="change-skin-btn">
             <img src="Slither-Settings.png" alt="Settings" />
@@ -482,6 +768,39 @@
             <p>Final Score: <span id="final-score">0</span></p>
             <button id="respawn-button">RESPAWN</button>
         </div>
+                <!-- AI SCREEN OVERLAY -->
+        <div id="ai-screen">
+            <!-- SIDEBAR -->
+            <div class="ai-sidebar">
+                <div class="ai-sidebar-header">
+                    <button id="ai-back-btn">← Back to Game</button>
+                </div>
+                <div class="ai-sidebar-empty">No chats yet</div>
+            </div>
+
+                        <!-- MAIN CHAT AREA -->
+            <div class="ai-main-chat">
+                
+                <!-- Chat Messages Container (No bubbles) -->
+                <div id="ai-chat-messages"></div>
+
+                <div class="ai-input-wrapper">
+                    <div class="ai-input-box">
+                        <textarea id="ai-chatInput" placeholder="Ask anything..." rows="2"></textarea>
+                        <div class="ai-action-row">
+                            <!-- Image Upload Button -->
+                            <button class="ai-attach-btn" id="ai-attachBtn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                            </button>
+                            <input type="file" id="ai-imageInput" accept="image/*" style="display: none;" />
+                            
+                            <button class="ai-send-btn" id="ai-sendBtn">
+                                <svg viewBox="0 0 24 24"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         <script>
             // ========== HEX TILE ==========
@@ -1381,6 +1700,269 @@ const chatContainer = document.getElementById("chat-container");
                 document.getElementById("respawn-button").addEventListener("click", () => {
                     document.getElementById("death-screen").style.display = "none";
                     initGame();
+                });
+                                                // ========== AI SCREEN LOGIC ==========
+                const aiScreen = document.getElementById("ai-screen");
+                const startBtn2 = document.getElementById("start-button2");
+                const aiBackBtn = document.getElementById("ai-back-btn");
+                const aiChatInput = document.getElementById("ai-chatInput");
+                const aiSendBtn = document.getElementById("ai-sendBtn");
+                const aiChatMessages = document.getElementById("ai-chat-messages");
+                const aiAttachBtn = document.getElementById("ai-attachBtn");
+                const aiImageInput = document.getElementById("ai-imageInput");
+
+                
+
+                // Global functions for buttons
+                window.copyAICode = function(id) {
+                    const codeText = document.querySelector(`#${id} pre code`).innerText;
+                    navigator.clipboard.writeText(codeText);
+                    const btn = document.querySelector(`#${id} .ai-code-btn`);
+                    const originalText = btn.innerText;
+                    btn.innerText = "Copied!";
+                    setTimeout(() => btn.innerText = originalText, 2000);
+                };
+
+                window.downloadAICode = function(id, ext) {
+                    const codeText = document.querySelector(`#${id} pre code`).innerText;
+                    const blob = new Blob([codeText], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `code.${ext === 'javascript' ? 'js' : ext === 'python' ? 'py' : 'txt'}`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+
+                // Open AI Screen
+                startBtn2.addEventListener("click", () => {
+                    document.getElementById("start-screen").style.display = "none";
+                    document.getElementById("change-skin-btn").style.display = "none";
+                    document.getElementById("change-cosmetic-btn").style.display = "none";
+                    aiScreen.style.display = "flex";
+                    setTimeout(() => aiChatInput.focus(), 100);
+                });
+
+                // Close AI Screen
+                aiBackBtn.addEventListener("click", () => {
+                    aiScreen.style.display = "none";
+                    document.getElementById("start-screen").style.display = "flex";
+                    document.getElementById("change-skin-btn").style.display = "flex";
+                    document.getElementById("change-cosmetic-btn").style.display = "flex";
+                });
+
+                // Textarea Auto-resize
+                aiChatInput.addEventListener("input", function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                    if (this.scrollHeight > 150) {
+                        this.style.overflowY = 'auto';
+                    } else {
+                        this.style.overflowY = 'hidden';
+                    }
+                });
+
+                // Image Upload Trigger
+                aiAttachBtn.addEventListener("click", () => aiImageInput.click());
+
+                // Main Send Function
+                async function sendAIMessage() {
+                    const text = aiChatInput.value.trim();
+                    const file = aiImageInput.files[0];
+                    if (!text && !file) return;
+
+                    // 1. Render User Message (No bubble)
+                    let userDisplay = text;
+                    if (file) userDisplay += `\n📷 [Image Attached]`;
+                    
+                    const userRow = document.createElement("div");
+                    userRow.className = "ai-msg-row";
+                    userRow.innerHTML = `<div class="ai-msg-user">${userDisplay}</div>`;
+                    aiChatMessages.appendChild(userRow);
+                    
+                    // Clear inputs
+                    aiChatInput.value = '';
+                    aiChatInput.style.height = '48px';
+                    aiImageInput.value = '';
+                    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+                    // 2. Create Bot Message Container
+                    const botRow = document.createElement("div");
+                    botRow.className = "ai-msg-row";
+                    const botContent = document.createElement("div");
+                    botContent.className = "ai-msg-bot";
+                    botContent.innerHTML = `<span style="color:#6e6eae;">Thinking...</span>`;
+                    botRow.appendChild(botContent);
+                    aiChatMessages.appendChild(botRow);
+                    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+                    // 3. Fetch from Backend
+                    try {
+                        let response;
+                                                if (file) {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            formData.append("message", text);
+                            response = await fetch("https://api.bezelsnake.io/chat-api/image", { method: "POST", body: formData });
+                        } else {
+                            response = await fetch("https://api.bezelsnake.io/chat-api/chat", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ message: text }),
+                            });
+                        }
+
+                        if (!response.ok) throw new Error("Server error");
+                        const data = await response.json();
+
+                        // 4. Handle Responses (Drawings vs Text)
+                        if (data.image_base64) {
+                            // Image Gen (not in your backend but here just in case)
+                            const img = new Image();
+                            img.src = "data:image/png;base64," + data.image_base64;
+                            img.style.maxWidth = "100%";
+                            botContent.innerHTML = "";
+                            botContent.appendChild(img);
+                        } else if (data.response) {
+                            // Check if it's a JSON drawing command
+                            try {
+                                const parsed = JSON.parse(data.response);
+                                if (Array.isArray(parsed)) {
+                                    botContent.innerHTML = ""; // Clear thinking
+                                    drawAIShapes(botContent, parsed);
+                                } else {
+                                    throw new Error("Not an array");
+                                }
+                            } catch (e) {
+                                // It's normal Markdown text
+                                botContent.innerHTML = "";
+                                await typeMarkdown(data.response, botContent);
+                            }
+                        }
+                    } catch (err) {
+                        botContent.innerHTML = `<span style="color:#f87171;">Error: Could not reach the AI backend. Make sure Uvicorn is running.</span>`;
+                    }
+                    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+                }
+
+                                                // Function to transform standard code blocks into our custom UI cards
+                function formatCodeCards(html) {
+                    // 1. Handle code blocks with a language tag
+                    html = html.replace(/<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g, function(match, lang, code) {
+                        const id = 'code-' + Math.random().toString(36).substr(2, 9);
+                        return `
+                        <div class="ai-code-card" id="${id}">
+                            <div class="ai-code-header">
+                                <span>${lang}</span>
+                                <div class="ai-code-actions">
+                                    <button class="ai-code-btn" onclick="copyAICode('${id}')">Copy</button>
+                                    <button class="ai-code-btn" onclick="downloadAICode('${id}', '${lang}')">Download</button>
+                                </div>
+                            </div>
+                            <pre><code>${code}</code></pre>
+                        </div>`;
+                    });
+                    
+                    // 2. Handle code blocks without a language tag
+                    html = html.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, function(match, code) {
+                        const id = 'code-' + Math.random().toString(36).substr(2, 9);
+                        return `
+                        <div class="ai-code-card" id="${id}">
+                            <div class="ai-code-header">
+                                <span>code</span>
+                                <div class="ai-code-actions">
+                                    <button class="ai-code-btn" onclick="copyAICode('${id}')">Copy</button>
+                                    <button class="ai-code-btn" onclick="downloadAICode('${id}', 'txt')">Download</button>
+                                </div>
+                            </div>
+                            <pre><code>${code}</code></pre>
+                        </div>`;
+                    });
+                    return html;
+                }
+
+                // Fast & Safe Typewriter for Markdown
+                async function typeMarkdown(fullText, container) {
+                    let currentText = "";
+                    const speed = 2; // Very fast (2ms per character)
+                    
+                    for (let i = 0; i < fullText.length; i++) {
+                        currentText += fullText[i];
+                        
+                        if (i % 5 === 0 || i === fullText.length - 1) {
+                            try {
+                                let parseText = currentText;
+                                const backticks = (parseText.match(/```/g) || []).length;
+                                if (backticks % 2 !== 0) {
+                                    parseText += "\n```"; 
+                                }
+                                
+                                let html = marked.parse(parseText);
+                                container.innerHTML = formatCodeCards(html);
+                                aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+                            } catch (err) {
+                                container.textContent = currentText;
+                            }
+                        }
+                        await new Promise(r => setTimeout(r, speed));
+                    }
+                    
+                    // Final perfect render
+                    try {
+                        container.innerHTML = formatCodeCards(marked.parse(fullText));
+                    } catch (e) {
+                        container.textContent = fullText;
+                    }
+                }
+
+                // Shape Drawing Logic
+                function drawAIShapes(container, commands) {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 600;
+                    canvas.height = 300;
+                    canvas.style.backgroundColor = "#0a0a15";
+                    canvas.style.borderRadius = "8px";
+                    canvas.style.border = "1px solid #4c447c";
+                    container.appendChild(canvas);
+                    
+                    const ctx = canvas.getContext("2d");
+                    commands.forEach(cmd => {
+                        switch (cmd.type) {
+                            case "rect":
+                                ctx.fillStyle = cmd.color || "blue";
+                                ctx.fillRect(cmd.x, cmd.y, cmd.width, cmd.height);
+                                break;
+                            case "circle":
+                                ctx.beginPath();
+                                ctx.arc(cmd.x, cmd.y, cmd.radius, 0, 2 * Math.PI);
+                                ctx.fillStyle = cmd.color || "red";
+                                ctx.fill();
+                                break;
+                            case "text":
+                                ctx.fillStyle = cmd.color || "black";
+                                ctx.font = cmd.font || "20px Arial";
+                                ctx.fillText(cmd.text, cmd.x, cmd.y);
+                                break;
+                            case "triangle":
+                                ctx.beginPath();
+                                ctx.moveTo(cmd.x1, cmd.y1);
+                                ctx.lineTo(cmd.x2, cmd.y2);
+                                ctx.lineTo(cmd.x3, cmd.y3);
+                                ctx.closePath();
+                                ctx.fillStyle = cmd.color || "green";
+                                ctx.fill();
+                                break;
+                        }
+                    });
+                }
+
+                                // Event Listeners
+                aiSendBtn.addEventListener("click", sendAIMessage);
+                aiChatInput.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendAIMessage();
+                    }
                 });
             }
 
