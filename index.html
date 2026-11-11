@@ -708,6 +708,65 @@
                 fill: currentColor;
             }
 
+                        /* Fix Scrollbar: Dark green thumb, no background, far right */
+            ::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #0d1a11; /* Darker green */
+                border-radius: 5px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #122618;
+            }
+
+            /* Fix Code Header: Darker green */
+            .ai-code-header {
+                background-color: #0d1a11 !important; 
+                border-bottom: 1px solid #1a3524;
+            }
+
+            /* Fix Code Card Overlap */
+            .ai-code-card {
+                clear: both;
+                position: relative;
+                z-index: 10;
+                margin: 10px 0;
+            }
+
+            /* Paste Preview Styling */
+            #ai-paste-preview {
+                width: 50px;
+                height: 50px;
+                border-radius: 8px;
+                background-size: cover;
+                background-position: center;
+                margin-bottom: 10px;
+                display: none; /* Hidden by default */
+                position: relative;
+                border: 1px solid #4c447c;
+            }
+            
+            /* Loading Spinner for Paste */
+            #ai-paste-preview.loading::after {
+                content: '';
+                position: absolute;
+                top: 50%; left: 50%;
+                width: 20px; height: 20px;
+                margin: -10px 0 0 -10px;
+                border: 3px solid #fff;
+                border-top-color: transparent;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
         </style>
     </head>
     <body>
@@ -784,8 +843,11 @@
                 <!-- Chat Messages Container (No bubbles) -->
                 <div id="ai-chat-messages"></div>
 
-                <div class="ai-input-wrapper">
+                    <div class="ai-input-wrapper">
                     <div class="ai-input-box">
+                        <!-- New Paste Preview Container -->
+                        <div id="ai-paste-preview"></div>
+                        
                         <textarea id="ai-chatInput" placeholder="Ask anything..." rows="2"></textarea>
                         <div class="ai-action-row">
                             <!-- Image Upload Button -->
@@ -1710,7 +1772,38 @@ const chatContainer = document.getElementById("chat-container");
                 const aiChatMessages = document.getElementById("ai-chat-messages");
                 const aiAttachBtn = document.getElementById("ai-attachBtn");
                 const aiImageInput = document.getElementById("ai-imageInput");
+                                const pastePreview = document.getElementById("ai-paste-preview");
+                let pastedImage = null;
 
+                // Handle Ctrl+V Image Paste
+                window.addEventListener('paste', (e) => {
+                    if (!aiScreen || aiScreen.style.display !== 'flex') return;
+                    
+                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                    for (let index in items) {
+                        const item = items[index];
+                        if (item.kind === 'file' && item.type.includes('image')) {
+                            const blob = item.getAsFile();
+                            pastedImage = blob;
+                            
+                            // Show loading state
+                            pastePreview.style.display = 'block';
+                            pastePreview.classList.add('loading');
+                            pastePreview.style.backgroundImage = 'none';
+                            pastePreview.style.backgroundColor = '#000';
+                            
+                            // Render preview
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                pastePreview.classList.remove('loading');
+                                pastePreview.style.backgroundImage = `url(${event.target.result})`;
+                            };
+                            reader.readAsDataURL(blob);
+                            
+                            e.preventDefault();
+                        }
+                    }
+                });
                 
 
                 // Global functions for buttons
@@ -1765,11 +1858,19 @@ const chatContainer = document.getElementById("chat-container");
                 // Image Upload Trigger
                 aiAttachBtn.addEventListener("click", () => aiImageInput.click());
 
-                // Main Send Function
+                    // Main Send Function
                 async function sendAIMessage() {
                     const text = aiChatInput.value.trim();
-                    const file = aiImageInput.files[0];
+                    // Check for pasted image first, then file input
+                    const file = pastedImage || aiImageInput.files[0];
                     if (!text && !file) return;
+                    
+                    // Clear the paste preview state after we grab the file
+                    if (pastedImage) {
+                        pastedImage = null;
+                        pastePreview.style.display = 'none';
+                        pastePreview.style.backgroundImage = 'none';
+                    }
 
                     // 1. Render User Message (No bubble)
                     let userDisplay = text;
@@ -1783,6 +1884,9 @@ const chatContainer = document.getElementById("chat-container");
                     // Clear inputs
                     aiChatInput.value = '';
                     aiChatInput.style.height = '48px';
+                    aiImageInput.value = '';
+                    pastePreview.style.display = 'none'; // Hide preview after sending
+                    pastePreview.style.backgroundImage = 'none';
                     aiImageInput.value = '';
                     aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
 
@@ -1799,50 +1903,102 @@ const chatContainer = document.getElementById("chat-container");
                     // 3. Fetch from Backend
                     try {
                         let response;
-                                                if (file) {
+                                                                        if (file) {
                             const formData = new FormData();
                             formData.append("file", file);
                             formData.append("message", text);
                             response = await fetch("https://api.bezelsnake.io/chat-api/image", { method: "POST", body: formData });
+                            if (!response.ok) throw new Error("Server error");
+                            const data = await response.json();
+                            if (data.response) {
+                                botContent.innerHTML = "";
+                                await typeMarkdown(data.response, botContent);
+                            }
                         } else {
                             response = await fetch("https://api.bezelsnake.io/chat-api/chat", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ message: text }),
                             });
-                        }
-
-                        if (!response.ok) throw new Error("Server error");
-                        const data = await response.json();
-
-                        // 4. Handle Responses (Drawings vs Text)
-                        if (data.image_base64) {
-                            // Image Gen (not in your backend but here just in case)
-                            const img = new Image();
-                            img.src = "data:image/png;base64," + data.image_base64;
-                            img.style.maxWidth = "100%";
-                            botContent.innerHTML = "";
-                            botContent.appendChild(img);
-                        } else if (data.response) {
-                            // Check if it's a JSON drawing command
-                            try {
-                                const parsed = JSON.parse(data.response);
-                                if (Array.isArray(parsed)) {
-                                    botContent.innerHTML = ""; // Clear thinking
-                                    drawAIShapes(botContent, parsed);
-                                } else {
-                                    throw new Error("Not an array");
+                            if (!response.ok) throw new Error("Server error");
+                            
+                                                        const reader = response.body.getReader();
+                            const decoder = new TextDecoder();
+                            let buffer = ""; // Buffer to hold incomplete network chunks
+                            
+                            while (true) {
+                                const { done, value } = await reader.read();
+                                if (done) break;
+                                
+                                buffer += decoder.decode(value, { stream: true });
+                                const parts = buffer.split('\n\n');
+                                buffer = parts.pop(); // Keep the last incomplete chunk in the buffer
+                                
+                                for (const part of parts) {
+                                    if (part.startsWith('data: ')) {
+                                        let data;
+                                        try {
+                                            data = JSON.parse(part.slice(6));
+                                        } catch (e) {
+                                            console.error("JSON parse error on chunk:", part);
+                                            continue; // Safely skip broken chunks
+                                        }
+                                        
+                                                                                if (data.type === 'progress') {
+                                            botContent.innerHTML = `<span style="color:#6e6eae; font-style: italic;">${data.text}</span>`;
+                                                                                } else if (data.type === 'chunk') {
+                                            if (!botContent.dataset.isStreaming) {
+                                                botContent.innerHTML = "";
+                                                botContent.dataset.isStreaming = "true";
+                                                botContent.dataset.fullText = "";
+                                            }
+                                            botContent.dataset.fullText += data.text;
+                                            
+                                            // THROTTLE RENDERING: Only parse markdown 20 times per second
+                                            if (!botContent.renderTimeout) {
+                                                botContent.renderTimeout = setTimeout(() => {
+                                                    botContent.innerHTML = formatCodeCards(marked.parse(botContent.dataset.fullText));
+                                                    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+                                                    botContent.renderTimeout = null;
+                                                }, 50); 
+                                            }
+                                        } else if (data.type === 'final') {
+                                            // Reset the streaming state for the next message
+                                            botContent.dataset.isStreaming = "";
+                                            
+                                            // Check if it's a JSON drawing command
+                                            try {
+                                                const parsed = JSON.parse(data.text);
+                                                if (Array.isArray(parsed)) {
+                                                    botContent.innerHTML = ""; 
+                                                    drawAIShapes(botContent, parsed);
+                                                } else {
+                                                    throw new Error("Not an array");
+                                                }
+                                            } catch (e) {
+                                                // If the backend sent final text but it was already streamed, do nothing.
+                                                // If it wasn't streamed (e.g., weather), display it now.
+                                                if (!botContent.dataset.fullText) {
+                                                    botContent.innerHTML = "";
+                                                    await typeMarkdown(data.text, botContent);
+                                                }
+                                            }
+                                        } else if (data.type === 'error') {
+                                            botContent.innerHTML = `<span style="color:#f87171;">${data.text}</span>`;
+                                        }
+                                    }
                                 }
-                            } catch (e) {
-                                // It's normal Markdown text
-                                botContent.innerHTML = "";
-                                await typeMarkdown(data.response, botContent);
                             }
                         }
                     } catch (err) {
-                        botContent.innerHTML = `<span style="color:#f87171;">Error: Could not reach the AI backend. Make sure Uvicorn is running.</span>`;
+                        console.error("Full AI Error:", err);
+                        botContent.innerHTML = `<span style="color:#f87171;">Network Error: ${err.message}. Please check the server logs.</span>`;
                     }
                     aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+                                        // Keep only the last 20 messages in the DOM to prevent lag
+                    while (aiChatMessages.children.length > 20) {
+                        aiChatMessages.removeChild(aiChatMessages.firstChild);
+                    }
                 }
 
                                                 // Function to transform standard code blocks into our custom UI cards
