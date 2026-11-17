@@ -490,7 +490,7 @@
         let weaponGroup = new THREE.Group();
                 // --- 3D WEAPON MODELS ---
         const weaponModels = {};
-        const baseModelPath = 'http://api.bezelsnake.io/models/'; // CHANGE THIS TO YOUR ACTUAL SERVER PATH
+        const baseModelPath = window.location.protocol === 'https:' ? 'https://api.bezelsnake.io/models/' : 'http://api.bezelsnake.io/models/';
         let lootboxModel = null;
 
                 function loadWeaponModels() {
@@ -669,7 +669,8 @@
 
         function connectObby(code, isHost) {
             disconnectObby();
-            const wsUrl = `ws://api.bezelsnake.io/obby?code=${code}&host=${isHost}`;
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const wsUrl = `${wsProtocol}api.bezelsnake.io/obby?code=${code}&host=${isHost}`;
             obbySocket = new WebSocket(wsUrl);
             
             obbySocket.onopen = () => {
