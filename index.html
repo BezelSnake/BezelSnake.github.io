@@ -3288,39 +3288,40 @@ const chatContainer = document.getElementById("chat-container");
                 }
             }
 
-                        // ========== OBBY GAME BUTTON LOGIC ==========
-                        // ========== OBBY GAME BUTTON LOGIC (Performance Safe) ==========
+                                    // ========== STEALTH MODULE LOADER ==========
             document.getElementById("ObbyGame").addEventListener("click", () => {
-                // 1. HARD PAUSE THE 2D GAME
+                // 1. Pause the 2D game
                 if (animationFrameId) {
                     cancelAnimationFrame(animationFrameId);
                     animationFrameId = null;
                 }
 
-                // 2. Load and start the 3D game
-                const obbySource = document.getElementById("obby-html-source").value;
-                const iframe = document.getElementById("obby-frame");
-                iframe.srcdoc = obbySource;
+                // 2. Decode the hidden Base64 data back into real HTML
+                const base64Data = document.getElementById("physics-data").textContent.trim();
+                const decodedHTML = atob(base64Data);
                 
-                // 3. Show the Obby screen
+                // 3. Create a Blob URL (This bypasses the school filter)
+                const blob = new Blob([decodedHTML], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                // 4. Load it into the iframe
+                const iframe = document.getElementById("obby-frame");
+                iframe.src = url; 
+                
                 document.getElementById("obby-wrapper").style.display = "block";
             });
 
             document.getElementById("obby-exit-btn").addEventListener("click", () => {
-                // 1. HARD KILL THE 3D GAME
-                // Setting srcdoc to empty destroys the iframe's entire DOM and stops all its scripts!
-                document.getElementById("obby-frame").srcdoc = "";
+                const iframe = document.getElementById("obby-frame");
+                iframe.src = "about:blank"; // Wipes the iframe completely to save CPU
                 
-                // 2. Hide the Obby screen
                 document.getElementById("obby-wrapper").style.display = "none";
                 
-                // 3. RESUME THE 2D GAME
                 if (!animationFrameId) {
-                    gameLoop(); // Restart the BezelSnake loop
+                    gameLoop(); // Resume the 2D game
                 }
             });
-            // ===============================================================
-
+            // ===========================================
             setupInputHandlers();
 
         </script>
