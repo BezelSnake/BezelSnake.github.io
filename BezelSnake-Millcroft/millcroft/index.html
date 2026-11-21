@@ -194,9 +194,14 @@ function runPreview() {
   }, true);
   win.addEventListener('unhandledrejection', event => gameError(describe(event.reason)));
   const original = win.console.error.bind(win.console);
-  win.console.error = (...args) => {
+    win.console.error = (...args) => {
     original(...args);
-    gameError(args.map(describe).join(' '));
+
+    const message = args.map(describe).join(' ');
+    const hdrNotice = /^(?:\[[^\]\r\n]+\]\s*)*:?\s*32\s+bit\s+HDR\s*-\s*linear\s+filter[\s-]+support\s*:\s*false\s*$/i;
+
+    if (hdrNotice.test(message.trim())) return;
+    gameError(message);
   };
   win.addEventListener('keydown', event => {
     if (event.ctrlKey && event.shiftKey && event.code === 'KeyE') {
