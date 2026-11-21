@@ -58,7 +58,7 @@ summary::after { content: '▼'; }
   </details>
 </aside>
 <img class="cover" src="cover.webp" alt="Minecraft characters exploring a forest cave">
-<a class="launch" id="launch" href="/millcroft/?version=1.8.8">Launch</a>
+<a class="launch" id="launch" href="../millcroft/?version=1.8.8">Launch</a>
 <script>
 const versions = document.querySelector('#versions');
 const summary = versions.querySelector('summary');
@@ -66,7 +66,7 @@ function syncVersion() {
   const choice = versions.querySelector(':checked');
   document.querySelector('#selection').textContent = choice.parentElement.textContent.trim()
     + (choice.defaultChecked ? '　(default)' : '');
-  document.querySelector('#launch').href = '/millcroft/?version=' + choice.value;
+  document.querySelector('#launch').href = '../millcroft/?version=' + choice.value;
 }
 function closeMenu() {
   versions.open = false;
@@ -93,7 +93,7 @@ document.querySelector('#launch').addEventListener('click', event => {
     return; // The version in the link also works when storage is disabled.
   }
   event.preventDefault();
-  location.assign('/millcroft/');
+  location.assign('../millcroft/');
 });
 window.addEventListener('pageshow', syncVersion);
 </script>
