@@ -50,7 +50,7 @@ const editor = { html: '', frame: null, sourceShown: false, messages: [] };
 function selectedVersion() {
   const query = new URLSearchParams(location.search).get('version');
   if (query !== null) return query;
-  try { return sessionStorage.getItem('module.version') || '1.8.8'; }
+  try { return sessionStorage.getItem('millcroft.version') || '1.8.8'; }
   catch { return '1.8.8'; }
 }
 
