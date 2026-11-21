@@ -214,7 +214,27 @@ function runPreview() {
     el('loading').hidden = true;
     if (el('debug').hidden) frame.focus();
   }, {once:true});
-  doc.write(editor.html);
+    let previewHTML = editor.html;
+
+  if (version === '26.3') {
+    const prepareAssets = 'window.__eagPrepareInlineAssets();';
+
+    previewHTML = previewHTML.replace(prepareAssets, () => `
+      window.__eagPrepareInlineAssets();
+
+      for (const pack of window.eaglercraftXOpts.assetsURI) {
+        if (!pack.url.startsWith('eagler-inline-payload://')) continue;
+
+        const response = await window.fetch(pack.url);
+        if (!response.ok) {
+          throw new Error('Could not read embedded pack: ' + pack.url);
+        }
+        pack.url = URL.createObjectURL(await response.blob());
+      }
+    `);
+  }
+
+  doc.write(previewHTML);
   doc.close();
 }
 
