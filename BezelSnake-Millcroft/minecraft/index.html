@@ -58,7 +58,7 @@ summary::after { content: '▼'; }
   </details>
 </aside>
 <img class="cover" src="cover.webp" alt="Game characters">
-<a class="launch" id="launch" href="'../macromd/?version='">Launch</a>
+<a class="launch" id="launch" href="'../millcroft/?version='">Launch</a>
 <script>
 const versions = document.querySelector('#versions');
 const summary = versions.querySelector('summary');
@@ -93,7 +93,7 @@ document.querySelector('#launch').addEventListener('click', event => {
     return; // The version in the link also works when storage is disabled.
   }
   event.preventDefault();
-  location.assign('../macromd/');
+  location.assign('../millcroft/');
 });
 window.addEventListener('pageshow', syncVersion);
 </script>
