@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Millcroft · BezelSnake</title>
+<title>Module Loader · BezelSnake</title>
 <style>
 * { box-sizing: border-box }
 [hidden] { display: none !important }
@@ -175,7 +175,7 @@ function runPreview() {
   el('log').textContent = '';
   el('debug').hidden = true;
   el('loading').hidden = false;
-  el('status').textContent = 'Opening Minecraft…';
+  el('status').textContent = 'Opening Module…';
 
   const frame = document.createElement('iframe');
   frame.title = 'Millcroft game preview';
@@ -251,7 +251,7 @@ const version = selectedVersion();
 const file = files.get(version);
 try {
   if (!file) throw new Error('Unknown version. Choose a build on the Versions screen.');
-  el('status').textContent = 'Loading Minecraft ' + version + '…';
+  el('status').textContent = 'Loading Module ' + version + '…';
   editor.html = await readGame(file);
   runPreview();
 } catch (error) { report((file ? file + '\n' : '') + describe(error)); }
