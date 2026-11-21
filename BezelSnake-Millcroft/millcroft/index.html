@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Millcroft · BezelSnake</title>
+<style>
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { margin: 0; background: #0a110d; color: #f3f7f4; font: 16px system-ui,sans-serif }
+#preview, iframe, #loading, #debug { position: fixed; inset: 0; width: 100%; height: 100%; border: 0 }
+#loading { display: grid; place-content: center; justify-items: center; gap: 12px; background: radial-gradient(ellipse,#1a3524,#080c09) }
+progress { width: min(260px,75vw); accent-color: #7ec86a }
+#debug { display: grid; grid-template-rows: auto minmax(0,1fr); background: #101813 }
+header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px }
+header strong { margin-right: auto }
+button, a { background: #284633; color: white; border: 1px solid #526858; padding: 7px 12px; border-radius: 6px; font: inherit; text-decoration: none; cursor: pointer }
+main { display: grid; grid-template-columns: 3fr 2fr; min-height: 0 }
+section { display: grid; grid-template-rows: auto minmax(0,1fr); min-width: 0; min-height: 0 }
+h2 { font-size: 15px; margin: 0; padding: 8px 12px }
+textarea, pre { width: 100%; height: 100%; margin: 0; resize: none; overflow: auto; padding: 10px; background: #090f0b; color: #e0ede2; border: 1px solid #37483c; font: 13px/1.5 monospace }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; color: #ffcbbd }
+@media(max-width:650px) { main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr } }
+</style>
+</head>
+<body>
+<div id="preview"></div>
+<div id="loading"><span id="status" role="status">Preparing Millcroft…</span><progress id="progress"></progress></div>
+<div id="debug" hidden>
+<header><strong>Millcroft editor</strong><button id="run">Run edited HTML</button><button id="resume">Show game</button><a href="/minecraft/">Versions</a></header>
+<main>
+<section><h2><label for="source">Game HTML</label></h2><textarea id="source" spellcheck="false" wrap="off"></textarea></section>
+<section><h2>Console</h2><pre id="log"></pre></section>
+</main>
+</div>
+<script type="module">
+const files = new Map([
+  ['1.8.8', 'Minecraft_v1.8.8-wasm.txt'],
+  ['26.3', 'Minecraft_v26.3-wasm.txt'],
+  ['26.2', 'Minecraft_v26.2-wasm.txt'],
+  ['1.12.2', 'Minecraft_v1.12.2-wasm.txt'],
+  ['1.5.2', 'Minecraft_v1.5.2.txt']
+]);
+const el = id => document.getElementById(id);
+const editor = { html: '', frame: null, sourceShown: false, messages: [] };
+
+function selectedVersion() {
+  const query = new URLSearchParams(location.search).get('version');
+  if (query !== null) return query;
+  try { return sessionStorage.getItem('millcroft.version') || '1.8.8'; }
+  catch { return '1.8.8'; }
+}
+
+async function readGame(file) {
+  const response = await fetch('./' + file);
+  if (!response.ok) throw new Error(file + ' returned HTTP ' + response.status);
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const pieces = [];
+  let carry = '', padded = false, count = 0, lastPaint = 0;
+  function decode(block) {
+    const raw = atob(block);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    pieces.push(decoder.decode(bytes, {stream:true}));
+  }
+  try {
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      count += value.length;
+      const clean = value.replace(/\s/g,'');
+      if (padded && clean) throw new Error('Extra text after Base64 padding.');
+      const chunk = carry + clean;
+      const end = chunk.length - chunk.length % 4;
+      carry = chunk.slice(end);
+      if (end) {
+        const block = chunk.slice(0,end);
+        decode(block);
+        padded = block.endsWith('=');
+        if (padded && carry) throw new Error('Extra text after Base64 padding.');
+      }
+      if (performance.now() - lastPaint > 80) {
+        el('status').textContent = 'Reading ' + file + ' · ' + (count / 1048576).toFixed(1) + ' MiB';
+        await new Promise(resolve => setTimeout(resolve,0));
+        lastPaint = performance.now();
+      }
+    }
+    if (carry) decode(carry);
+    pieces.push(decoder.decode());
+    const html = pieces.join('');
+    if (!html.trimStart().startsWith('<')) throw new Error('Expected the Base64 of a complete HTML document.');
+    return html;
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  } finally { reader.releaseLock(); }
+}
+
+function describe(value) {
+  if (value && typeof value.stack === 'string') return value.stack;
+  if (typeof value === 'string') return value;
+  try { return JSON.stringify(value) ?? String(value); }
+  catch { return String(value); }
+}
+
+function showEditor() {
+  if (!editor.sourceShown) {
+    el('source').value = editor.html;
+    editor.sourceShown = true;
+  }
+  el('resume').disabled = !editor.frame;
+  el('loading').hidden = true;
+  el('debug').hidden = false;
+}
+
+function report(message) {
+  const entry = String(message).slice(0,12000);
+  if (editor.messages.at(-1) !== entry) {
+    editor.messages.push(entry);
+    if (editor.messages.length > 50) editor.messages.shift();
+    el('log').textContent = editor.messages.join('\n\n');
+  }
+  showEditor();
+}
+
+function runPreview() {
+  if (!editor.html.trim()) throw new Error('The editor has no game HTML to run.');
+  editor.messages = [];
+  el('log').textContent = '';
+  el('debug').hidden = true;
+  el('loading').hidden = false;
+  el('status').textContent = 'Opening Minecraft…';
+
+  const frame = document.createElement('iframe');
+  frame.title = 'Millcroft game preview';
+  frame.allow = 'autoplay; fullscreen';
+  editor.frame = frame;
+  el('preview').replaceChildren(frame);
+  const win = frame.contentWindow;
+  const doc = win.document;
+  doc.open();
+  function gameError(message) {
+    if (editor.frame === frame) report(message);
+  }
+  win.addEventListener('error', event => {
+    if (event.target === win) gameError(describe(event.error || event.message) + '\nLine ' + event.lineno + ', column ' + event.colno);
+    else if (event.target.tagName === 'SCRIPT') gameError('Failed to load script: ' + event.target.src);
+  }, true);
+  win.addEventListener('unhandledrejection', event => gameError(describe(event.reason)));
+  const original = win.console.error.bind(win.console);
+  win.console.error = (...args) => {
+    original(...args);
+    gameError(args.map(describe).join(' '));
+  };
+  win.addEventListener('keydown', event => {
+    if (event.ctrlKey && event.shiftKey && event.code === 'KeyE') {
+      event.preventDefault();
+      showEditor();
+    }
+  }, true);
+  win.addEventListener('load', () => {
+    if (editor.frame !== frame) return;
+    el('loading').hidden = true;
+    if (el('debug').hidden) frame.focus();
+  }, {once:true});
+  doc.write(editor.html);
+  doc.close();
+}
+
+el('resume').onclick = () => {
+  el('debug').hidden = true;
+  editor.frame.focus();
+};
+el('run').onclick = () => {
+  editor.html = el('source').value;
+  try { runPreview(); } catch (error) { report(describe(error)); }
+};
+
+const version = selectedVersion();
+const file = files.get(version);
+try {
+  if (!file) throw new Error('Unknown version. Choose a build on the Versions screen.');
+  el('status').textContent = 'Loading Minecraft ' + version + '…';
+  editor.html = await readGame(file);
+  runPreview();
+} catch (error) { report((file ? file + '\n' : '') + describe(error)); }
+</script>
+</body>
+</html>
