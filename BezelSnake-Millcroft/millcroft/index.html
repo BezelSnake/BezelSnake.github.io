@@ -27,7 +27,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; color: #ffcbbd }
 <div id="preview"></div>
 <div id="loading"><span id="status" role="status">Preparing Millcroft…</span><progress id="progress"></progress></div>
 <div id="debug" hidden>
-<header><strong>Millcroft editor</strong><button id="run">Run edited HTML</button><button id="resume">Show game</button><a href="/minecraft/">Versions</a></header>
+<header><strong>Millcroft editor</strong><button id="run">Run edited HTML</button><button id="resume">Show game</button><a href="../minecraft/">Versions</a></header>
 <main>
 <section><h2><label for="source">Game HTML</label></h2><textarea id="source" spellcheck="false" wrap="off"></textarea></section>
 <section><h2>Console</h2><pre id="log"></pre></section>
@@ -52,9 +52,54 @@ function selectedVersion() {
 }
 
 async function readGame(file) {
-  const response = await fetch('./' + file);
-  if (!response.ok) throw new Error(file + ' returned HTTP ' + response.status);
-  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    const manifestName = file + '.json';
+  const manifest = await fetch('./' + manifestName);
+  if (!manifest.ok) {
+    throw new Error(manifestName + ' returned HTTP ' + manifest.status);
+  }
+
+  const { parts } = await manifest.json();
+  if (!Array.isArray(parts) || parts.length === 0) {
+    throw new Error('No game pieces listed in ' + manifestName);
+  }
+
+  let nextPart = 0;
+  let partReader = null;
+
+  const stream = new ReadableStream({
+    async pull(controller) {
+      while (true) {
+        if (!partReader) {
+          if (nextPart === parts.length) {
+            controller.close();
+            return;
+          }
+
+          const name = parts[nextPart++];
+          const response = await fetch('./' + encodeURIComponent(name));
+          if (!response.ok) {
+            throw new Error(name + ' returned HTTP ' + response.status);
+          }
+          partReader = response.body.getReader();
+        }
+
+        const { done, value } = await partReader.read();
+        if (!done) {
+          controller.enqueue(value);
+          return;
+        }
+
+        partReader.releaseLock();
+        partReader = null;
+      }
+    },
+
+    async cancel(reason) {
+      if (partReader) await partReader.cancel(reason);
+    }
+  });
+
+  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
   const decoder = new TextDecoder('utf-8', { fatal: true });
   const pieces = [];
   let carry = '', padded = false, count = 0, lastPaint = 0;
