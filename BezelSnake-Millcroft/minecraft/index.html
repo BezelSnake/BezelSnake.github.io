@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Configure Minecraft · BezelSnake</title>
+<title>Configure Module · BezelSnake</title>
 <style>
 * { box-sizing: border-box; }
 body {
@@ -57,8 +57,8 @@ summary::after { content: '▼'; }
     </div>
   </details>
 </aside>
-<img class="cover" src="cover.webp" alt="Minecraft characters exploring a forest cave">
-<a class="launch" id="launch" href="../millcroft/?version=1.8.8">Launch</a>
+<img class="cover" src="cover.webp" alt="Game characters">
+<a class="launch" id="launch" href="'../macromd/?version='">Launch</a>
 <script>
 const versions = document.querySelector('#versions');
 const summary = versions.querySelector('summary');
@@ -93,7 +93,7 @@ document.querySelector('#launch').addEventListener('click', event => {
     return; // The version in the link also works when storage is disabled.
   }
   event.preventDefault();
-  location.assign('../millcroft/');
+  location.assign('../macromd/');
 });
 window.addEventListener('pageshow', syncVersion);
 </script>
