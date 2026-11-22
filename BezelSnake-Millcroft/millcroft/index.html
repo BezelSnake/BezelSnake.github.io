@@ -211,6 +211,14 @@ function runPreview() {
   }
 
   // Create the Blob URL (Stealth)
+    if (version === '26.3' && navigator.userAgent.includes('CrOS')) {
+    const assetURL = new URL('./assets.epk', location.href).href;
+    previewHTML = previewHTML.replaceAll(
+      'eagler-inline-payload://assets.epk',
+      assetURL
+    );
+  }
+
   const blob = new Blob([previewHTML], { type: 'text/html' });
   const blobUrl = URL.createObjectURL(blob);
 
