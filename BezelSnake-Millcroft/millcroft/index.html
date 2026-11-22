@@ -195,6 +195,12 @@ function runPreview() {
       for (const pack of opts.assetsURI) {
         if (!pack.url.startsWith('eagler-inline-payload://')) continue;
 
+                if (navigator.userAgent.includes('CrOS')) {
+          const filename = pack.url.slice('eagler-inline-payload://'.length);
+          pack.url = new URL(filename, ${JSON.stringify(new URL('./', location.href).href)}).href;
+          continue;
+        }
+
         const response = await window.fetch(pack.url);
         if (!response.ok) {
           throw new Error('Could not read embedded pack: ' + pack.url);
