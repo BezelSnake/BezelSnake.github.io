@@ -394,7 +394,8 @@
             }
             .game-tile {
                 position: relative;
-                width: calc((100% - 75px) / 2);
+                width: 450px;
+                flex: 0 0 450px;
                 background: transparent;
                 border: 0;
                 appearance: none;
@@ -420,14 +421,23 @@
                 object-fit: cover;
                 border-radius: 12px;
             }
+            
             .game-row {
                 position: relative;
-                bottom: 50px;
-                width: min(975px, calc(100% - 24px));
+                bottom: 50px; /* Vertical positioning */
+                
+                width: min(1500px, calc(100vw - 24px));
                 height: 200px;
+
                 display: flex;
-                gap: 75px;
-                left: clamp(-137.5px, calc((999px - 100vw) / 2), 0px);
+                gap: 75px; /* Spacing between all cards */
+                align-items: center;
+
+                left: 0px; /* Horizontal positioning */
+
+                /* Allow scrolling if the screen is too narrow */
+                overflow-x: auto;
+                overflow-y: hidden;
             }
             .game-tile:focus-visible { outline: 3px solid white; }
             .game-tile span {
@@ -873,6 +883,12 @@ PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CiAgICA8bWV0YSBjaGFyc2V0PSJV
             <div class="game-row">
                 <button id="ObbyGame" class="game-tile" aria-label="Obby Game"><img src="obby-game-placeholder.png" alt=""></button>
                 <a class="game-tile" href="/BezelSnake-Millcroft/minecraft/" aria-label="Minecraft"><img src="/BezelSnake-Millcroft/minecraft/cover.webp" alt=""><span>Minecraft</span></a>
+                
+                <a class="game-tile" href="/geometry-dash/">
+                    <img src="geometry-dash.webp" alt="Geometry Dash">
+                    <span>Geometry Dash</span>
+                </a>
+
             </div>
         </div>
         <div id="change-skin-btn">
