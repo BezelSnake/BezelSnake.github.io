@@ -188,7 +188,7 @@ function runPreview() {
 
       const opts = window.eaglercraftXOpts;
       if (navigator.userAgent.includes('CrOS')) {
-        opts.serverWorker = false;
+        opts.serverWorker = true;
         opts.singleThreadMode = true;
       }
 
