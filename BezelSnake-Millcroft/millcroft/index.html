@@ -184,9 +184,15 @@ function runPreview() {
   if (version === '26.3') {
     const prepareAssets = 'window.__eagPrepareInlineAssets();';
     previewHTML = previewHTML.replace(prepareAssets, () => `
-      window.__eagPrepareInlineAssets();
+           window.__eagPrepareInlineAssets();
 
-      for (const pack of window['eaglercraft'+'XOpts'].assetsURI) {
+      const opts = window.eaglercraftXOpts;
+      if (navigator.userAgent.includes('CrOS')) {
+        opts.serverWorker = false;
+        opts.singleThreadMode = true;
+      }
+
+      for (const pack of opts.assetsURI) {
         if (!pack.url.startsWith('eagler-inline-payload://')) continue;
 
         const response = await window.fetch(pack.url);
